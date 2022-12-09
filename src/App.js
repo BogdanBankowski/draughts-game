@@ -1,10 +1,27 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+const TEST_GAME = [[32,28],[19,23],[28,19],[14,23],[37,32]];
+const TEST_GAME2 = [[32,28],[18,22],[37,32],[12,18],[41,37],[7,12],[46,41],[1,7]];
+const DEFAULT_BOARD = []
+
+for (let i=0;i<50;i++){
+  if (i<20) DEFAULT_BOARD.push({ noOfField: i+1, color: "black" });
+  else if(i>29) DEFAULT_BOARD.push({ noOfField: i+1, color: "white" });
+}
+
 // 1. make it pretty
 // 2. visibly distinguish white/black field, white/black pieces
 function Field({ piece, white }) {
-  return <span>{white ? "_" : piece || "X"}</span>;
+  if (white){
+    return <div className='field-white'></div>
+  }
+  else if(!piece){
+    return <div className='field-black'></div>
+  }
+  else {
+    return <div className='field-black'><div className={piece+'-piece'}></div> </div>
+  }
 }
 
 // 1. on component mount, play a set of movements defined in PDN format
@@ -17,45 +34,87 @@ function Field({ piece, white }) {
 // 4. display a list of already played movements
 
 // 5. allow playing different games
+
+function isRowEven(field){
+  return(field % 10 >5 ? true : false);
+}
+// normalne ruchy + bicia do tyłu i do przodu obsłużone. Brakuje ruchów damką bić damką i wielobić 
+function handleMove(movFrom, movTo,actualBoard) {
+ // let pieceToCapture = null;
+  
+// movFrom:19 movTo:28 doZbicia:23
+ /* if(Math.abs(movFrom-movTo)===11){
+    if(isRowEven(movFrom)){
+      movFrom > movTo ? pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movFrom-6)) : pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movTo-6))
+    } 
+    else if(!isRowEven(movFrom)){
+      movFrom > movTo ? pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movFrom-5)) : pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movTo-5))
+    } 
+  }
+  else if(Math.abs(movFrom-movTo===9)){
+    if(isRowEven(movFrom)){
+      console.log('test1');
+      movFrom > movTo ? pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movFrom-5)) : pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movTo-5))
+    } 
+    else if(!isRowEven(movFrom)){
+      movFrom > movTo ? pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movFrom-4)) : pieceToCapture = actualBoard.find(elem =>(elem.noOfField === movTo-4))
+    } 
+  }
+  if(pieceToCapture==!null) pieceToCapture.noOfField = null; */
+  let pieceToMove = actualBoard.find(elem => (
+    elem.noOfField === movFrom
+  ));
+  pieceToMove.noOfField = movTo;
+
+  return actualBoard.slice();
+}
+
+
 function Board() {
-  const [pieces, setPieces] = useState([
-    { noOfField: 1, color: "W" },
-    { noOfField: 40, color: "W" },
-    { noOfField: 42, color: "B" },
-  ]);
+  const [pieces, setPieces] = useState(DEFAULT_BOARD);
 
   useEffect(() => {
-    setTimeout(() => {
-      setPieces([
-        { noOfField: 1, color: "W" },
-        { noOfField: 40, color: "W" },
-        { noOfField: 42, color: "B" },
-      ])
-    }, 3000)
-  }, [])
 
-  return Array(10)
+   // for (let i=0;i<TEST_GAME.length;i++){}
+   let i=0; 
+   let gameInterval = setInterval(() => {
+      i<TEST_GAME2.length ? setPieces(handleMove(TEST_GAME2[i][0],TEST_GAME2[i][1],pieces)) : clearInterval(gameInterval);
+      i++;    
+      }
+    , 1000)
+
+  }
+  , []);
+
+  
+
+  return <div className='board'>{Array(10)
     .fill()
     .map((_, y) => {
       return (
-        <div>
+        <div className='row'>
           {Array(10)
             .fill()
             .map((_, x) => {
               const white = y % 2 === 0 ? x % 2 === 0 : x % 2 === 1;
               const noOfField =
                 y * 5 + (y % 2 === 0 ? (x + 1) / 2 : (x + 2) / 2);
-
               const piece = pieces.find(
                 (piece) => piece.noOfField === noOfField
               );
-
               return <Field white={white} piece={piece?.color} />;
             })}
         </div>
       );
-    });
+    })}</div>;
 }
+
+
+
+
+
+
+
 
 function App() {
   return <Board />;
