@@ -23,11 +23,6 @@ function Field({ piece, white }) {
     return <div className='field-black'><div className={piece+'-piece'}></div> </div>
   }
 }
-
-// 1. on component mount, play a set of movements defined in PDN format
-// each movement should last 1 second
-// the game should stop playing when the game's over
-
 // 2. allow stopping and resuming the game
 // 3. allow going one movement forward and back
 
@@ -61,32 +56,56 @@ function handleMove(movFrom, movTo,actualBoard) {
     } 
   }
   if(pieceToCapture==!null) pieceToCapture.noOfField = null; */
+  console.log({actualBoard,movFrom,movTo});
   let pieceToMove = actualBoard.find(elem => (
     elem.noOfField === movFrom
   ));
   pieceToMove.noOfField = movTo;
 
+
   return actualBoard.slice();
 }
 
 
+
 function Board() {
   const [pieces, setPieces] = useState(DEFAULT_BOARD);
-
+  const [stopButtonClicked, setStopButton] = useState(false);
+  const [movIndex, setMovIndex] = useState(0);
+  const gameLength = TEST_GAME2.length; // DO ZMIANY
   useEffect(() => {
 
    // for (let i=0;i<TEST_GAME.length;i++){}
-   let i=0; 
+    
    let gameInterval = setInterval(() => {
-      i<TEST_GAME2.length ? setPieces(handleMove(TEST_GAME2[i][0],TEST_GAME2[i][1],pieces)) : clearInterval(gameInterval);
-      i++;    
-      }
+      
+      if(!stopButtonClicked){
+      movIndex<TEST_GAME2.length ? setPieces(handleMove(TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1],pieces)) : clearInterval(gameInterval);
+      setMovIndex(movIndex+1);    
+      }}
     , 1000)
 
-  }
-  , []);
+    return () => clearInterval(gameInterval)
 
+  }
+  , [stopButtonClicked,pieces,movIndex]);
   
+  let previousMove = function(){
+     if(movIndex-1>=0){
+      setStopButton(true);
+      
+      handleMove(TEST_GAME2[movIndex-1][1],TEST_GAME2[movIndex-1][0],pieces);
+      setMovIndex(movIndex-1)
+    }
+  }
+  let nextMove = function(){
+    if(movIndex+1<=gameLength){
+      setStopButton(true);
+      handleMove(TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1],pieces);
+      setMovIndex(movIndex+1)
+    }
+  }
+
 
   return <div className='board'>{Array(10)
     .fill()
@@ -106,10 +125,16 @@ function Board() {
             })}
         </div>
       );
-    })}</div>;
+    })} 
+    <button onClick = {() => previousMove()}>Previous</button>
+    <button onClick={() => setStopButton(!stopButtonClicked)}>{stopButtonClicked?'Start':'Stop'}</button>
+    <button onClick = {() => nextMove()}>Next</button>
+    
+    </div>
+   ;
 }
 
-
+// USE EFFECT, SETINTERVAL, SETTIMEOUT
 
 
 
