@@ -48,8 +48,21 @@
   border-radius: 50%;
 }
 
+.moves-list{
+  position: absolute;
+  top: 50px;
+  left: 700px;
+}
 
+.button-image{
+  height: 50px;
+  width: 100px;
+}
 
+.navbar{
+  display: flex;
+  justify-content: space-between;
+}
 
 
 .App {

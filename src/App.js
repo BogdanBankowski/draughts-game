@@ -72,6 +72,7 @@ function Board() {
   const [pieces, setPieces] = useState(DEFAULT_BOARD);
   const [stopButtonClicked, setStopButton] = useState(false);
   const [movIndex, setMovIndex] = useState(0);
+  const [playedMoves, setPlayedMoves] = useState([]);
   const gameLength = TEST_GAME2.length; // DO ZMIANY
   useEffect(() => {
 
@@ -80,21 +81,40 @@ function Board() {
    let gameInterval = setInterval(() => {
       
       if(!stopButtonClicked){
-      movIndex<TEST_GAME2.length ? setPieces(handleMove(TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1],pieces)) : clearInterval(gameInterval);
-      setMovIndex(movIndex+1);    
+        if(movIndex<TEST_GAME2.length){
+          setPieces(handleMove(TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1],pieces))
+          setPlayedMoves(addMoveToPlayedList(playedMoves,[TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1]]));
+          setMovIndex(movIndex+1);
+        }
+        else{
+          clearInterval(gameInterval);
+        }   
+          
       }}
     , 1000)
 
     return () => clearInterval(gameInterval)
 
   }
-  , [stopButtonClicked,pieces,movIndex]);
+  , [stopButtonClicked,pieces,movIndex]); // PYTANIE: PO CO TUTAJ movIndex
   
+  let addMoveToPlayedList = function(actualList, move){
+    let playedListToReturn = actualList.slice();
+    playedListToReturn.push(move);
+    return playedListToReturn;
+  }
+
+  let removeMoveFromPlayedList = function(actualList){
+    let playedListToReturn = actualList.slice();
+    playedListToReturn.pop();
+    return playedListToReturn;
+  }
+
   let previousMove = function(){
      if(movIndex-1>=0){
       setStopButton(true);
-      
       handleMove(TEST_GAME2[movIndex-1][1],TEST_GAME2[movIndex-1][0],pieces);
+      setPlayedMoves(removeMoveFromPlayedList(playedMoves));
       setMovIndex(movIndex-1)
     }
   }
@@ -102,7 +122,8 @@ function Board() {
     if(movIndex+1<=gameLength){
       setStopButton(true);
       handleMove(TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1],pieces);
-      setMovIndex(movIndex+1)
+      setPlayedMoves(addMoveToPlayedList(playedMoves,[TEST_GAME2[movIndex][0],TEST_GAME2[movIndex][1]]));
+      setMovIndex(movIndex+1);
     }
   }
 
@@ -126,10 +147,12 @@ function Board() {
         </div>
       );
     })} 
-    <button onClick = {() => previousMove()}>Previous</button>
+    <div className='navbar'>
+    <button onClick = {() => previousMove()}><img className='button-image' src='https://media.istockphoto.com/id/871054742/pl/wektor/cofnij-ikon%C4%99-glif%C3%B3w-grafik%C4%99-wektorow%C4%85-znaku-z-ty%C5%82u-jednolity-wz%C3%B3r-na-bia%C5%82ym-tle-eps-10.jpg?s=612x612&w=0&k=20&c=sLfwzM0GTJ5F6drUc1LA2BsVInNB6NW3MROnTVB_QVE='></img></button>
     <button onClick={() => setStopButton(!stopButtonClicked)}>{stopButtonClicked?'Start':'Stop'}</button>
     <button onClick = {() => nextMove()}>Next</button>
-    
+    </div>
+    <MoveList moves={playedMoves}/>
     </div>
    ;
 }
@@ -137,11 +160,20 @@ function Board() {
 // USE EFFECT, SETINTERVAL, SETTIMEOUT
 
 
+function MoveList(props){
+  const list = props.moves.map((elem) => <li>{elem[0]}-{elem[1]}</li>);
+  return (
+    <div className='moves-list'>
+      <ul>{list}</ul>
+    </div>
+  )
+}
 
 
 
 
 function App() {
+  
   return <Board />;
 }
 
