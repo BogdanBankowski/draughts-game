@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import "./App.css";
 
 const TEST_GAME = [[32,28],[19,23],[28,19],[14,23],[37,32]];
@@ -6,12 +6,17 @@ const TEST_GAME2 = [[32,28],[18,22],[37,32],[12,18],[41,37],[7,12],[46,41],[1,7]
 const DEFAULT_BOARD = []
 
 for (let i=0;i<50;i++){
-  if (i<20) DEFAULT_BOARD.push({ noOfField: i+1, color: "black" });
-  else if(i>29) DEFAULT_BOARD.push({ noOfField: i+1, color: "white" });
+  if (i<20) DEFAULT_BOARD.push({ noOfField: i+1, color: "black", type: 'piece' });
+  else if(i>29) DEFAULT_BOARD.push({ noOfField: i+1, color: "white", type:'piece' });
 }
 
 // 1. make it pretty
 // 2. visibly distinguish white/black field, white/black pieces
+
+const PlayedMovesContext = createContext();
+
+
+
 function Field({ piece, white }) {
   if (white){
     return <div className='field-white'></div>
@@ -61,22 +66,22 @@ function handleMove(movFrom, movTo,actualBoard) {
     elem.noOfField === movFrom
   ));
   pieceToMove.noOfField = movTo;
-
+  if (pieceToMove.noOfField>=46 && pieceToMove.color === 'black') pieceToMove.type = 'queen';
+  else if(pieceToMove.noOfField<=5 && pieceToMove.color === 'white') pieceToMove.type = 'queen';
 
   return actualBoard.slice();
 }
 
 
 
-function Board() {
+  function Board() {
   const [pieces, setPieces] = useState(DEFAULT_BOARD);
   const [stopButtonClicked, setStopButton] = useState(false);
   const [movIndex, setMovIndex] = useState(0);
-  const [playedMoves, setPlayedMoves] = useState([]);
   const gameLength = TEST_GAME2.length; // DO ZMIANY
+  const [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
   useEffect(() => {
 
-   // for (let i=0;i<TEST_GAME.length;i++){}
     
    let gameInterval = setInterval(() => {
       
@@ -148,23 +153,31 @@ function Board() {
       );
     })} 
     <div className='navbar'>
-    <button onClick = {() => previousMove()}><img className='button-image' src='https://media.istockphoto.com/id/871054742/pl/wektor/cofnij-ikon%C4%99-glif%C3%B3w-grafik%C4%99-wektorow%C4%85-znaku-z-ty%C5%82u-jednolity-wz%C3%B3r-na-bia%C5%82ym-tle-eps-10.jpg?s=612x612&w=0&k=20&c=sLfwzM0GTJ5F6drUc1LA2BsVInNB6NW3MROnTVB_QVE='></img></button>
-    <button onClick={() => setStopButton(!stopButtonClicked)}>{stopButtonClicked?'Start':'Stop'}</button>
-    <button onClick = {() => nextMove()}>Next</button>
+    
+    <button className='navButton' onClick = {() => previousMove()}>⇦</button>
+    <button className='navButton' onClick={() => setStopButton(!stopButtonClicked)}>{stopButtonClicked?'▶':'II'}</button>
+    <button className='navButton' onClick = {() => nextMove()}>⇨</button>
     </div>
-    <MoveList moves={playedMoves}/>
-    </div>
+    </div> 
    ;
 }
 
 // USE EFFECT, SETINTERVAL, SETTIMEOUT
 
 
-function MoveList(props){
-  const list = props.moves.map((elem) => <li>{elem[0]}-{elem[1]}</li>);
+function MoveList(){
+  let [playedMoves,] = useContext(PlayedMovesContext);
+  const whiteMoves = playedMoves.filter((elem,indx)=>indx%2===0);
+  const blackMoves = playedMoves.filter((elem,indx)=>indx%2===1);
+  const whiteList = whiteMoves.map((elem) => <li>{elem[0]}-{elem[1]}</li>);
+  const blackList = blackMoves.map((elem) => <li>{elem[0]}-{elem[1]}</li>);
   return (
+    <div>
+    <h1>Moves List</h1>
     <div className='moves-list'>
-      <ul>{list}</ul>
+      <ul className='white-list'>{whiteList}</ul>
+      <ul>{blackList}</ul>
+    </div>
     </div>
   )
 }
@@ -173,8 +186,15 @@ function MoveList(props){
 
 
 function App() {
-  
-  return <Board />;
+  const [playedMoves, setPlayedMoves] = useState([]);
+  return (
+    <div className='container'>
+    <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
+      <Board />
+      <MoveList />
+    </PlayedMovesContext.Provider>
+    </div>
+  )
 }
 
 export default App;

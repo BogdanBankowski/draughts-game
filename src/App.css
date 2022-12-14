@@ -7,6 +7,8 @@
   margin-left: 70px;
 }
 
+
+
 .field-white{
   width: 50px;
   height: 50px;
@@ -21,10 +23,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgb(39, 70, 22);
+  background-color: rgb(116, 81, 70);
   z-index:50;
 }
-
+/*rgb(76, 104, 62)
+rgb(116, 81, 70)*/
 
 .row{
   display:flex;
@@ -48,11 +51,7 @@
   border-radius: 50%;
 }
 
-.moves-list{
-  position: absolute;
-  top: 50px;
-  left: 700px;
-}
+
 
 .button-image{
   height: 50px;
@@ -61,7 +60,49 @@
 
 .navbar{
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
+  margin-top: 30px;
+}
+
+.container{
+  display: flex;
+  justify-content: space-around;
+}
+ul{
+  list-style: none;
+  text-align: center;
+  padding:0;
+  size: 100%;
+}
+li{
+  text-align: center;
+  margin-top: 4px;
+  margin-left: 18px;
+  margin-right: 18px;
+}
+.moves-list{
+margin-top: 70px;
+display: flex;
+background-color: bisque;
+border: 3px solid black;
+padding-top: 0;
+margin-top: 0;
+
+}
+.navButton{
+  width: 80px;
+  font-size: xx-large;
+  background-color: bisque;
+  border-radius: 30%;
+}
+h1{
+  margin-bottom: 0;
+  padding: 0;
+  margin-top: 50px;
+}
+
+.white-list{
+  border-right: 2px solid black;
 }
 
 
