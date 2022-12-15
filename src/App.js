@@ -43,7 +43,7 @@ for (let i = 0; i < 50; i++) {
 
 const PlayedMovesContext = createContext();
 
-function numToSiPosition(fieldNumber) {
+function numToCoords(fieldNumber) {
   const y = Math.floor((fieldNumber - 1) / 5);
 
   if (fieldNumber % 10 === 0) {
@@ -58,17 +58,17 @@ function numToSiPosition(fieldNumber) {
   }
 }
 
-function SiToNumPosition(x, y) {
+function coordsToNum(x, y) {
   return y * 5 + (y % 2 === 0 ? (x + 1) / 2 : (x + 2) / 2);
 }
 
 function findDiagonally(fieldNumber, direction, distance) {
-  const piece = numToSiPosition(fieldNumber);
+  const piece = numToCoords(fieldNumber);
   const pieceToReturn = {
     x: piece.x - direction.x * distance,
     y: piece.y - direction.y * distance,
   };
-  return SiToNumPosition(pieceToReturn.x, pieceToReturn.y); // nr pola na ktore sie ruszymy
+  return coordsToNum(pieceToReturn.x, pieceToReturn.y); // nr pola na ktore sie ruszymy
 }
 
 function Field({ piece, white }) {
@@ -87,17 +87,19 @@ function Field({ piece, white }) {
 
 function handleCapture(movFrom, movTo, actualBoard) {
   let pieceToMove = actualBoard.find((elem) => elem.noOfField === movFrom);
-  let pieceOnSi = numToSiPosition(pieceToMove.noOfField);
+  let pieceOnSi = numToCoords(pieceToMove.noOfField);
   let direction = isCapturePossible(pieceToMove.noOfField, actualBoard);
   if (direction) {
-    pieceOnSi.x += 2 * direction.x;
-    pieceOnSi.y += 2 * direction.y;
-    pieceToMove.noOfField = SiToNumPosition(pieceOnSi.x, pieceOnSi.y);
     let pieceToDeleteCoords = {
       x: pieceOnSi.x + direction.x,
       y: pieceOnSi.y + direction.y,
     };
-    let pieceToDeleteNum = SiToNumPosition(
+
+    pieceOnSi.x += 2 * direction.x;
+    pieceOnSi.y += 2 * direction.y;
+    pieceToMove.noOfField = coordsToNum(pieceOnSi.x, pieceOnSi.y);
+
+    let pieceToDeleteNum = coordsToNum(
       pieceToDeleteCoords.x,
       pieceToDeleteCoords.y
     );
@@ -129,58 +131,37 @@ function handleTurn(move, pieces) {
   }
 }
 
-function isCapturePossible(fieldNumber, actualBoard) {
-  const piece = numToSiPosition(fieldNumber);
+const addCoords = ({ x: x1, y: y1 }, { x: x2, y: y2 }) => ({
+  x: x1 + x2,
+  y: y1 + y2,
+});
+const mulCoords = ({ x: x1, y: y1 }, num) => ({ x: x1 * num, y: y1 * num });
 
-  if (
-    actualBoard.find(
-      (elem) => elem.noOfField === SiToNumPosition(piece.x + 1, piece.y + 1)
-    )
-  ) {
+const getPieceOnBoard = (pieceCoords, pieces) =>
+  pieces.find(
+    (elem) => elem.noOfField === coordsToNum(pieceCoords.x, pieceCoords.y)
+  );
+
+function isCapturePossible(fieldNumber, pieces) {
+  const pieceCoords = numToCoords(fieldNumber);
+  const piece = getPieceOnBoard(pieceCoords, pieces);
+
+  const possibleCaptureDirections = Object.values(DIAGONALS);
+
+  for (let direction of possibleCaptureDirections) {
+    const pieceToCaptureCoords = addCoords(pieceCoords, direction);
+    const fieldAfterPieceToCaptureCoords = addCoords(
+      pieceCoords,
+      mulCoords(direction, 2)
+    );
     if (
-      !actualBoard.find(
-        (elem) => elem.noOfField === SiToNumPosition(piece.x + 2, piece.y + 2)
-      )
+      getPieceOnBoard(pieceToCaptureCoords, pieces)?.color !== piece.color &&
+      !getPieceOnBoard(fieldAfterPieceToCaptureCoords, pieces)
     ) {
-      return DIAGONALS.southWest;
-    }
-  } else if (
-    actualBoard.find(
-      (elem) => elem.noOfField === SiToNumPosition(piece.x + 1, piece.y - 1)
-    )
-  ) {
-    if (
-      !actualBoard.find(
-        (elem) => elem.noOfField === SiToNumPosition(piece.x + 2, piece.y - 2)
-      )
-    ) {
-      return DIAGONALS.southEast;
-    }
-  } else if (
-    actualBoard.find(
-      (elem) => elem.noOfField === SiToNumPosition(piece.x - 1, piece.y + 1)
-    )
-  ) {
-    if (
-      !actualBoard.find(
-        (elem) => elem.noOfField === SiToNumPosition(piece.x - 2, piece.y + 2)
-      )
-    ) {
-      return DIAGONALS.northWest;
-    }
-  } else if (
-    actualBoard.find(
-      (elem) => elem.noOfField === SiToNumPosition(piece.x - 1, piece.y - 1)
-    )
-  ) {
-    if (
-      !actualBoard.find(
-        (elem) => elem.noOfField === SiToNumPosition(piece.x - 2, piece.y - 2)
-      )
-    ) {
-      return DIAGONALS.northEast;
+      return direction;
     }
   }
+
   return null;
 }
 
@@ -191,7 +172,7 @@ function Board() {
   const gameLength = TEST_GAME3.length; // DO ZMIANY
   const [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
   useEffect(() => {
-    let gameInterval = setInterval(() => {
+    let gameInterval = setTimeout(() => {
       if (!stopButtonClicked) {
         if (movIndex < TEST_GAME3.length) {
           setPieces(handleTurn(TEST_GAME3[movIndex], pieces));
@@ -202,13 +183,11 @@ function Board() {
             ])
           );
           setMovIndex(movIndex + 1);
-        } else {
-          clearInterval(gameInterval);
         }
       }
-    }, 1000);
+    }, 500);
 
-    return () => clearInterval(gameInterval);
+    return () => clearTimeout(gameInterval);
   }, [stopButtonClicked, pieces, movIndex]);
 
   let addMoveToPlayedList = function (actualList, move) {
@@ -252,7 +231,6 @@ function Board() {
       setMovIndex(movIndex + 1);
     }
   };
-  console.log(pieces);
   return (
     <div className="board">
       {Array(10)
@@ -264,7 +242,7 @@ function Board() {
                 .fill()
                 .map((_, x) => {
                   const white = y % 2 === 0 ? x % 2 === 0 : x % 2 === 1;
-                  const noOfField = SiToNumPosition(x, y);
+                  const noOfField = coordsToNum(x, y);
 
                   const piece = pieces.find(
                     (piece) => piece.noOfField === noOfField
