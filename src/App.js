@@ -27,10 +27,13 @@ const TEST_GAME2 = [
 ];
 const TEST_GAME3 = [
   { movFrom: 32, movTo: 28, isCapture: false },
-  { movFrom: 19, movTo: 23, isCapture: false },
-  { movFrom: 28, movTo: 19, isCapture: true },
-  { movFrom: 14, movTo: 23, isCapture: true },
+  { movFrom: 18, movTo: 23, isCapture: false },
   { movFrom: 37, movTo: 32, isCapture: false },
+  { movFrom: 23, movTo: 29, isCapture: false },
+  { movFrom: 34, movTo: 23, isCapture: true },
+  { movFrom: 17, movTo: 22, isCapture: false },
+  { movFrom: 28, movTo: 17, isCapture: true },
+  { movFrom: 19, movTo: 26, isCapture: true },
 ];
 const DEFAULT_BOARD = [];
 
@@ -58,7 +61,7 @@ function numToCoords(fieldNumber) {
   }
 }
 
-function coordsToNum(x, y) {
+function coordsToNum({ x, y }) {
   return y * 5 + (y % 2 === 0 ? (x + 1) / 2 : (x + 2) / 2);
 }
 
@@ -68,7 +71,7 @@ function findDiagonally(fieldNumber, direction, distance) {
     x: piece.x - direction.x * distance,
     y: piece.y - direction.y * distance,
   };
-  return coordsToNum(pieceToReturn.x, pieceToReturn.y); // nr pola na ktore sie ruszymy
+  return coordsToNum(pieceToReturn); // nr pola na ktore sie ruszymy
 }
 
 function Field({ piece, white }) {
@@ -88,8 +91,13 @@ function Field({ piece, white }) {
 function handleCapture(movFrom, movTo, actualBoard) {
   let pieceToMove = actualBoard.find((elem) => elem.noOfField === movFrom);
   let pieceOnSi = numToCoords(pieceToMove.noOfField);
-  let direction = isCapturePossible(pieceToMove.noOfField, actualBoard);
-  if (direction) {
+  let chain = getLongestCaptureChain(
+    pieceToMove.noOfField,
+    movTo,
+    actualBoard,
+    getPieceOnBoard(pieceOnSi, actualBoard).color
+  );
+  for (const direction of chain) {
     let pieceToDeleteCoords = {
       x: pieceOnSi.x + direction.x,
       y: pieceOnSi.y + direction.y,
@@ -97,12 +105,9 @@ function handleCapture(movFrom, movTo, actualBoard) {
 
     pieceOnSi.x += 2 * direction.x;
     pieceOnSi.y += 2 * direction.y;
-    pieceToMove.noOfField = coordsToNum(pieceOnSi.x, pieceOnSi.y);
+    pieceToMove.noOfField = coordsToNum(pieceOnSi);
 
-    let pieceToDeleteNum = coordsToNum(
-      pieceToDeleteCoords.x,
-      pieceToDeleteCoords.y
-    );
+    let pieceToDeleteNum = coordsToNum(pieceToDeleteCoords);
     let pieceToDelete = actualBoard.find(
       (elem) => elem.noOfField === pieceToDeleteNum
     );
@@ -113,14 +118,16 @@ function handleCapture(movFrom, movTo, actualBoard) {
 }
 
 function handleMove(movFrom, movTo, actualBoard) {
-  let pieceToMove = actualBoard.find((elem) => elem.noOfField === movFrom);
-  pieceToMove.noOfField = movTo;
-  if (pieceToMove.noOfField >= 46 && pieceToMove.color === "black")
-    pieceToMove.type = "queen";
-  else if (pieceToMove.noOfField <= 5 && pieceToMove.color === "white")
-    pieceToMove.type = "queen";
-
-  return actualBoard.slice();
+  return actualBoard.map((elem) => {
+    if (elem.noOfField != movFrom) {
+      return elem;
+    }
+    let newType;
+    if (elem.noOfField >= 46 && elem.color === "black") newType = "queen";
+    else if (elem.noOfField <= 5 && elem.color === "white") newType = "queen";
+    else newType = "piece";
+    return { ...elem, noOfField: movTo, type: newType };
+  });
 }
 
 function handleTurn(move, pieces) {
@@ -138,31 +145,79 @@ const addCoords = ({ x: x1, y: y1 }, { x: x2, y: y2 }) => ({
 const mulCoords = ({ x: x1, y: y1 }, num) => ({ x: x1 * num, y: y1 * num });
 
 const getPieceOnBoard = (pieceCoords, pieces) =>
-  pieces.find(
-    (elem) => elem.noOfField === coordsToNum(pieceCoords.x, pieceCoords.y)
-  );
+  pieces.find((elem) => elem.noOfField === coordsToNum(pieceCoords));
 
-function isCapturePossible(fieldNumber, pieces) {
-  const pieceCoords = numToCoords(fieldNumber);
-  const piece = getPieceOnBoard(pieceCoords, pieces);
+function getLongestCaptureChain(
+  fieldNumberFrom,
+  fieldNumberTo,
+  pieces,
+  ogPieceColor,
+  piecesAlreadyCaptured = []
+) {
+  if (fieldNumberFrom === fieldNumberTo) return [];
+  const pieceCoords = numToCoords(fieldNumberFrom);
 
   const possibleCaptureDirections = Object.values(DIAGONALS);
 
+  const possibleCaptures = [];
+
   for (let direction of possibleCaptureDirections) {
     const pieceToCaptureCoords = addCoords(pieceCoords, direction);
+
+    if (
+      piecesAlreadyCaptured.find(
+        (pos) =>
+          pieceToCaptureCoords.x === pos.x && pieceToCaptureCoords.y === pos.y
+      )
+    )
+      continue;
+
     const fieldAfterPieceToCaptureCoords = addCoords(
       pieceCoords,
       mulCoords(direction, 2)
     );
     if (
-      getPieceOnBoard(pieceToCaptureCoords, pieces)?.color !== piece.color &&
+      getPieceOnBoard(pieceToCaptureCoords, pieces) &&
+      getPieceOnBoard(pieceToCaptureCoords, pieces).color !== ogPieceColor &&
       !getPieceOnBoard(fieldAfterPieceToCaptureCoords, pieces)
     ) {
-      return direction;
+      possibleCaptures.push(direction);
     }
   }
 
-  return null;
+  const chainsOfCaptures = [];
+
+  for (const captureDirection of possibleCaptures) {
+    const currentChain = [captureDirection];
+    const pieceToCaptureCoords = addCoords(pieceCoords, captureDirection);
+
+    const pieceCoordsAfterCapture = addCoords(
+      pieceCoords,
+      mulCoords(captureDirection, 2)
+    );
+    // @TODO remember which pieces were captured
+
+    const co = coordsToNum(pieceCoordsAfterCapture);
+    currentChain.push(
+      ...getLongestCaptureChain(co, fieldNumberTo, pieces, ogPieceColor, [
+        ...piecesAlreadyCaptured,
+        pieceToCaptureCoords,
+      ])
+    );
+
+    chainsOfCaptures.push(currentChain);
+  }
+
+  const longestChainLength = Math.max(
+    ...chainsOfCaptures.map((chain) => chain.length)
+  );
+
+  //  where do we end?
+  const longestChain = chainsOfCaptures.find(
+    (chain) => chain.length === longestChainLength
+  );
+
+  return longestChain;
 }
 
 function Board() {
@@ -205,10 +260,12 @@ function Board() {
   let previousMove = function () {
     if (movIndex - 1 >= 0) {
       setStopButton(true);
-      handleMove(
-        TEST_GAME3[movIndex - 1].movTo,
-        TEST_GAME3[movIndex - 1].movFrom,
-        pieces
+      setPieces(
+        handleMove(
+          TEST_GAME3[movIndex - 1].movTo,
+          TEST_GAME3[movIndex - 1].movFrom,
+          pieces
+        )
       );
       setPlayedMoves(removeMoveFromPlayedList(playedMoves));
       setMovIndex(movIndex - 1);
@@ -217,10 +274,12 @@ function Board() {
   let nextMove = function () {
     if (movIndex + 1 <= gameLength) {
       setStopButton(true);
-      handleMove(
-        TEST_GAME3[movIndex].movFrom,
-        TEST_GAME3[movIndex].movTo,
-        pieces
+      setPieces(
+        handleMove(
+          TEST_GAME3[movIndex].movFrom,
+          TEST_GAME3[movIndex].movTo,
+          pieces
+        )
       );
       setPlayedMoves(
         addMoveToPlayedList(playedMoves, [
@@ -237,18 +296,24 @@ function Board() {
         .fill()
         .map((_, y) => {
           return (
-            <div className="row">
+            <div key={y} className="row">
               {Array(10)
                 .fill()
                 .map((_, x) => {
                   const white = y % 2 === 0 ? x % 2 === 0 : x % 2 === 1;
-                  const noOfField = coordsToNum(x, y);
+                  const noOfField = coordsToNum({ x, y });
 
                   const piece = pieces.find(
                     (piece) => piece.noOfField === noOfField
                   );
 
-                  return <Field white={white} piece={piece?.color} />;
+                  return (
+                    <Field
+                      key={`${x - y}`}
+                      white={white}
+                      piece={piece?.color}
+                    />
+                  );
                 })}
             </div>
           );
@@ -275,13 +340,13 @@ function MoveList() {
   let [playedMoves] = useContext(PlayedMovesContext);
   const whiteMoves = playedMoves.filter((elem, indx) => indx % 2 === 0);
   const blackMoves = playedMoves.filter((elem, indx) => indx % 2 === 1);
-  const whiteList = whiteMoves.map((elem) => (
-    <li>
+  const whiteList = whiteMoves.map((elem, i) => (
+    <li key={i}>
       {elem[0]}-{elem[1]}
     </li>
   ));
-  const blackList = blackMoves.map((elem) => (
-    <li>
+  const blackList = blackMoves.map((elem, i) => (
+    <li key={i}>
       {elem[0]}-{elem[1]}
     </li>
   ));
