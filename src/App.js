@@ -88,7 +88,8 @@ function Field({ piece, white }) {
   }
 }
 
-function handleCapture(movFrom, movTo, actualBoard) {
+function handleCapture(movFrom, movTo, oldBoard) {
+  let actualBoard = JSON.parse(JSON.stringify(oldBoard));
   let pieceToMove = actualBoard.find((elem) => elem.noOfField === movFrom);
   let pieceOnSi = numToCoords(pieceToMove.noOfField);
   let chain = getLongestCaptureChain(
@@ -114,7 +115,7 @@ function handleCapture(movFrom, movTo, actualBoard) {
     pieceToDelete.noOfField = undefined;
   }
 
-  return actualBoard.slice();
+  return actualBoard;
 }
 
 function handleMove(movFrom, movTo, actualBoard) {
@@ -221,7 +222,8 @@ function getLongestCaptureChain(
 }
 
 function Board() {
-  const [pieces, setPieces] = useState(DEFAULT_BOARD);
+  const [boardHistory, setBoardHistory] = useState([DEFAULT_BOARD]);
+  const pieces = boardHistory[boardHistory.length - 1];
   const [stopButtonClicked, setStopButton] = useState(false);
   const [movIndex, setMovIndex] = useState(0);
   const gameLength = TEST_GAME3.length; // DO ZMIANY
@@ -230,7 +232,10 @@ function Board() {
     let gameInterval = setTimeout(() => {
       if (!stopButtonClicked) {
         if (movIndex < TEST_GAME3.length) {
-          setPieces(handleTurn(TEST_GAME3[movIndex], pieces));
+          setBoardHistory([
+            ...boardHistory,
+            handleTurn(TEST_GAME3[movIndex], pieces),
+          ]);
           setPlayedMoves(
             addMoveToPlayedList(playedMoves, [
               TEST_GAME3[movIndex].movFrom,
@@ -260,13 +265,7 @@ function Board() {
   let previousMove = function () {
     if (movIndex - 1 >= 0) {
       setStopButton(true);
-      setPieces(
-        handleMove(
-          TEST_GAME3[movIndex - 1].movTo,
-          TEST_GAME3[movIndex - 1].movFrom,
-          pieces
-        )
-      );
+      setBoardHistory(boardHistory.slice(0, boardHistory.length - 1));
       setPlayedMoves(removeMoveFromPlayedList(playedMoves));
       setMovIndex(movIndex - 1);
     }
@@ -274,13 +273,10 @@ function Board() {
   let nextMove = function () {
     if (movIndex + 1 <= gameLength) {
       setStopButton(true);
-      setPieces(
-        handleMove(
-          TEST_GAME3[movIndex].movFrom,
-          TEST_GAME3[movIndex].movTo,
-          pieces
-        )
-      );
+      setBoardHistory([
+        ...boardHistory,
+        handleTurn(TEST_GAME3[movIndex], pieces),
+      ]);
       setPlayedMoves(
         addMoveToPlayedList(playedMoves, [
           TEST_GAME3[movIndex].movFrom,
