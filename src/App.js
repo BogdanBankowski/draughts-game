@@ -1,5 +1,16 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import "./App.css";
+import { transformIntoGameFormat, gamesDatabase } from "./databaseOfGames.js";
+
+/* 
+Refactor 
+Podział aplikacji na pliki
+Zrobienie bazki z partiami
+Odpowiedni Display partii(nazwiska nad partią itp)
+navbar pomiędzy partiami z lewej strony
+zawijanie movelisty
+nr ruchów na moveliscie???
+*/
 
 const DIAGONALS = {
   northWest: { x: -1, y: -1 },
@@ -8,33 +19,9 @@ const DIAGONALS = {
   southEast: { x: 1, y: 1 },
 };
 
-const TEST_GAME = [
-  [32, 28],
-  [19, 23],
-  [28, 19],
-  [14, 23],
-  [37, 32],
-];
-const TEST_GAME2 = [
-  [32, 28],
-  [18, 22],
-  [37, 32],
-  [12, 18],
-  [41, 37],
-  [7, 12],
-  [46, 41],
-  [1, 7],
-];
-const TEST_GAME3 = [
-  { movFrom: 32, movTo: 28, isCapture: false },
-  { movFrom: 18, movTo: 23, isCapture: false },
-  { movFrom: 37, movTo: 32, isCapture: false },
-  { movFrom: 23, movTo: 29, isCapture: false },
-  { movFrom: 34, movTo: 23, isCapture: true },
-  { movFrom: 17, movTo: 22, isCapture: false },
-  { movFrom: 28, movTo: 17, isCapture: true },
-  { movFrom: 19, movTo: 26, isCapture: true },
-];
+const shownGame = gamesDatabase[4];
+const TEST_GAME3 = transformIntoGameFormat(shownGame.game);
+console.log(TEST_GAME3);
 const DEFAULT_BOARD = [];
 
 for (let i = 0; i < 50; i++) {
@@ -65,15 +52,6 @@ function coordsToNum({ x, y }) {
   return y * 5 + (y % 2 === 0 ? (x + 1) / 2 : (x + 2) / 2);
 }
 
-function findDiagonally(fieldNumber, direction, distance) {
-  const piece = numToCoords(fieldNumber);
-  const pieceToReturn = {
-    x: piece.x - direction.x * distance,
-    y: piece.y - direction.y * distance,
-  };
-  return coordsToNum(pieceToReturn); // nr pola na ktore sie ruszymy
-}
-
 function Field({ piece, white }) {
   if (white) {
     return <div className="field-white"></div>;
@@ -93,7 +71,7 @@ function handleCapture(movFrom, movTo, oldBoard) {
   let pieceToMove = actualBoard.find((elem) => elem.noOfField === movFrom);
   let pieceOnSi = numToCoords(pieceToMove.noOfField);
   let chain = getLongestCaptureChain(
-    pieceToMove.noOfField,
+    numToCoords(movFrom),
     movTo,
     actualBoard,
     getPieceOnBoard(pieceOnSi, actualBoard).color
@@ -123,11 +101,7 @@ function handleMove(movFrom, movTo, actualBoard) {
     if (elem.noOfField != movFrom) {
       return elem;
     }
-    let newType;
-    if (elem.noOfField >= 46 && elem.color === "black") newType = "queen";
-    else if (elem.noOfField <= 5 && elem.color === "white") newType = "queen";
-    else newType = "piece";
-    return { ...elem, noOfField: movTo, type: newType };
+    return { ...elem, noOfField: movTo };
   });
 }
 
@@ -149,23 +123,21 @@ const getPieceOnBoard = (pieceCoords, pieces) =>
   pieces.find((elem) => elem.noOfField === coordsToNum(pieceCoords));
 
 function getLongestCaptureChain(
-  fieldNumberFrom,
+  pieceCoords,
   fieldNumberTo,
   pieces,
   ogPieceColor,
   piecesAlreadyCaptured = []
 ) {
-  if (fieldNumberFrom === fieldNumberTo) return [];
-  const pieceCoords = numToCoords(fieldNumberFrom);
-
-  const possibleCaptureDirections = Object.values(DIAGONALS);
+  if (coordsToNum(pieceCoords) === fieldNumberTo) return [];
 
   const possibleCaptures = [];
 
-  for (let direction of possibleCaptureDirections) {
+  for (let direction of Object.values(DIAGONALS)) {
     const pieceToCaptureCoords = addCoords(pieceCoords, direction);
 
     if (
+      // sprawdzamy czy przeskakiwalismy juz przez pionka znajdujacego sie na polu ktore teraz rozważamy
       piecesAlreadyCaptured.find(
         (pos) =>
           pieceToCaptureCoords.x === pos.x && pieceToCaptureCoords.y === pos.y
@@ -196,14 +168,15 @@ function getLongestCaptureChain(
       pieceCoords,
       mulCoords(captureDirection, 2)
     );
-    // @TODO remember which pieces were captured
 
-    const co = coordsToNum(pieceCoordsAfterCapture);
     currentChain.push(
-      ...getLongestCaptureChain(co, fieldNumberTo, pieces, ogPieceColor, [
-        ...piecesAlreadyCaptured,
-        pieceToCaptureCoords,
-      ])
+      ...getLongestCaptureChain(
+        pieceCoordsAfterCapture,
+        fieldNumberTo,
+        pieces,
+        ogPieceColor,
+        [...piecesAlreadyCaptured, pieceToCaptureCoords]
+      )
     );
 
     chainsOfCaptures.push(currentChain);
@@ -357,14 +330,29 @@ function MoveList() {
   );
 }
 
+function Title(props) {
+  return (
+    <div className="title">
+      {props.names} {props.result}
+    </div>
+  );
+}
+
+function Navbar() {
+  return <ul></ul>;
+}
+
 function App() {
   const [playedMoves, setPlayedMoves] = useState([]);
   return (
-    <div className="container">
-      <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
-        <Board />
-        <MoveList />
-      </PlayedMovesContext.Provider>
+    <div>
+      <Title names={shownGame.title} result={shownGame.result} />
+      <div className="container">
+        <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
+          <Board />
+          <MoveList />
+        </PlayedMovesContext.Provider>
+      </div>
     </div>
   );
 }
