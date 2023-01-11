@@ -105,6 +105,28 @@ h1{
   border-right: 2px solid black;
 }
 
+.games-navbar{
+  background-color: bisque ;
+  border: 3px solid black;
+  display: flex;
+  width: 200px;
+  margin-top: 70px;
+}
+
+.game{
+  border-bottom: 3px solid black;
+  border-top: 3px solid black;
+  margin-top:50px;
+}
+
+.game:hover{
+  background-color: rgb(252, 180, 92) ;
+  cursor: pointer;
+}
+
+.result{
+  font-weight: bolder;
+}
 
 .App {
   text-align: center;

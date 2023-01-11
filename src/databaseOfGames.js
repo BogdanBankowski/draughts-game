@@ -15,27 +15,27 @@ export const gameBankowskiNiczyporuk =
 
 export const gamesDatabase = [
   {
-    title: "Zyber-Moszak Amadeusz - Bańkowski Bogdan",
+    title: "Moszak Amadeusz vs Bańkowski Bogdan",
     result: "0-2",
     game: gameZyberMoszakBankowski,
   },
   {
-    title: "Stacewicz Jakub - Bańkowski Bogdan",
+    title: "Stacewicz Jakub vs Bańkowski Bogdan",
     result: "0-2",
     game: gameStacewiczBankowski,
   },
   {
-    title: "Bańkowski Bogdan - Siuda Grzegorz",
+    title: "Bańkowski Bogdan vs Siuda Grzegorz",
     result: "2-0",
     game: gameBankowskiSiuda,
   },
   {
-    title: "Bańkowski Bogdan - Gronowski Bartosz",
+    title: "Bańkowski Bogdan vs Gronowski Bartosz",
     result: "2-0",
     game: gameBankowskiGronowski,
   },
   {
-    title: "Bańkowski Bogdan - Niczyporuk Mateusz",
+    title: "Bańkowski Bogdan vs Niczyporuk Mateusz",
     result: "2-0",
     game: gameBankowskiNiczyporuk,
   },

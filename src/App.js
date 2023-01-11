@@ -199,20 +199,21 @@ function Board() {
   const pieces = boardHistory[boardHistory.length - 1];
   const [stopButtonClicked, setStopButton] = useState(false);
   const [movIndex, setMovIndex] = useState(0);
-  const gameLength = TEST_GAME3.length; // DO ZMIANY
   const [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
+  const [currentGame, setCurrentGame] = useState(gamesDatabase[0]);
+  const moves = transformIntoGameFormat(currentGame.game);
   useEffect(() => {
     let gameInterval = setTimeout(() => {
       if (!stopButtonClicked) {
-        if (movIndex < TEST_GAME3.length) {
+        if (movIndex < moves.length) {
           setBoardHistory([
             ...boardHistory,
-            handleTurn(TEST_GAME3[movIndex], pieces),
+            handleTurn(moves[movIndex], pieces),
           ]);
           setPlayedMoves(
             addMoveToPlayedList(playedMoves, [
-              TEST_GAME3[movIndex].movFrom,
-              TEST_GAME3[movIndex].movTo,
+              moves[movIndex].movFrom,
+              moves[movIndex].movTo,
             ])
           );
           setMovIndex(movIndex + 1);
@@ -244,16 +245,13 @@ function Board() {
     }
   };
   let nextMove = function () {
-    if (movIndex + 1 <= gameLength) {
+    if (movIndex + 1 <= moves.length) {
       setStopButton(true);
-      setBoardHistory([
-        ...boardHistory,
-        handleTurn(TEST_GAME3[movIndex], pieces),
-      ]);
+      setBoardHistory([...boardHistory, handleTurn(moves[movIndex], pieces)]);
       setPlayedMoves(
         addMoveToPlayedList(playedMoves, [
-          TEST_GAME3[movIndex].movFrom,
-          TEST_GAME3[movIndex].movTo,
+          moves[movIndex].movFrom,
+          moves[movIndex].movTo,
         ])
       );
       setMovIndex(movIndex + 1);
@@ -333,13 +331,31 @@ function MoveList() {
 function Title(props) {
   return (
     <div className="title">
-      {props.names} {props.result}
+      <span className="names">{props.names}</span>{" "}
+      <span className="result">{props.result}</span>
     </div>
   );
 }
 
 function Navbar() {
-  return <ul></ul>;
+  return (
+    <div className="games-navbar">
+      <ul>
+        {gamesDatabase.map((value, index) => {
+          return (
+            <div>
+              <li kay={index} className="game">
+                {value.title}
+              </li>
+              <li className="result" key={index + "result"}>
+                {value.result}
+              </li>
+            </div>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 function App() {
@@ -348,6 +364,7 @@ function App() {
     <div>
       <Title names={shownGame.title} result={shownGame.result} />
       <div className="container">
+        <Navbar />
         <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
           <Board />
           <MoveList />
