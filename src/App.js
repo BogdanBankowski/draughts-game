@@ -3,13 +3,12 @@ import "./App.css";
 import { transformIntoGameFormat, gamesDatabase } from "./databaseOfGames.js";
 
 /* 
-Refactor 
-Podział aplikacji na pliki
-Zrobienie bazki z partiami
+Refactor k
+Podział aplikacji na pliki k
 Odpowiedni Display partii(nazwiska nad partią itp)
-navbar pomiędzy partiami z lewej strony
-zawijanie movelisty
-nr ruchów na moveliscie???
+zawijanie movelisty k
+nr ruchów na moveliscie [k???]
+bugi w rekurencji fest
 */
 
 const DIAGONALS = {
@@ -32,6 +31,9 @@ for (let i = 0; i < 50; i++) {
 }
 
 const PlayedMovesContext = createContext();
+const CurrentGameContext = createContext();
+const BoardHistoryContext = createContext();
+const MovIndexContext = createContext();
 
 function numToCoords(fieldNumber) {
   const y = Math.floor((fieldNumber - 1) / 5);
@@ -195,12 +197,12 @@ function getLongestCaptureChain(
 }
 
 function Board() {
-  const [boardHistory, setBoardHistory] = useState([DEFAULT_BOARD]);
+  const [boardHistory, setBoardHistory] = useContext(BoardHistoryContext);
   const pieces = boardHistory[boardHistory.length - 1];
   const [stopButtonClicked, setStopButton] = useState(false);
-  const [movIndex, setMovIndex] = useState(0);
+  const [movIndex, setMovIndex] = useContext(MovIndexContext);
   const [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
-  const [currentGame, setCurrentGame] = useState(gamesDatabase[0]);
+  const [currentGame, setCurrentGame] = useContext(CurrentGameContext);
   const moves = transformIntoGameFormat(currentGame.game);
   useEffect(() => {
     let gameInterval = setTimeout(() => {
@@ -269,7 +271,6 @@ function Board() {
                 .map((_, x) => {
                   const white = y % 2 === 0 ? x % 2 === 0 : x % 2 === 1;
                   const noOfField = coordsToNum({ x, y });
-
                   const piece = pieces.find(
                     (piece) => piece.noOfField === noOfField
                   );
@@ -338,13 +339,35 @@ function Title(props) {
 }
 
 function Navbar() {
+  let [currentGame, setCurrentGame] = useContext(CurrentGameContext);
+  let [boardHistory, setBoardHistory] = useContext(BoardHistoryContext);
+  let [movIndex, setMovIndex] = useContext(MovIndexContext);
+  let [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
+
+  const gamesDatabaseCopy = gamesDatabase.slice();
+  const gamesToDisplay = gamesDatabaseCopy.filter(
+    (elem) => elem.title !== currentGame.title
+  );
+  function handleGameSwap(e) {
+    const targetGame = gamesDatabase.find((elem) => elem.title === e.target.id);
+    setCurrentGame(targetGame);
+    setBoardHistory([DEFAULT_BOARD]);
+    setMovIndex(0);
+    setPlayedMoves([]);
+  }
+
   return (
     <div className="games-navbar">
       <ul>
-        {gamesDatabase.map((value, index) => {
+        {gamesToDisplay.map((value, index) => {
           return (
             <div>
-              <li kay={index} className="game">
+              <li
+                id={value.title}
+                onClick={(e) => handleGameSwap(e)}
+                key={index}
+                className="game"
+              >
                 {value.title}
               </li>
               <li className="result" key={index + "result"}>
@@ -360,15 +383,26 @@ function Navbar() {
 
 function App() {
   const [playedMoves, setPlayedMoves] = useState([]);
+  const [currentGame, setCurrentGame] = useState(gamesDatabase[0]);
+  const [boardHistory, setBoardHistory] = useState([DEFAULT_BOARD]);
+  const [movIndex, setMovIndex] = useState(0);
   return (
     <div>
       <Title names={shownGame.title} result={shownGame.result} />
       <div className="container">
-        <Navbar />
-        <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
-          <Board />
-          <MoveList />
-        </PlayedMovesContext.Provider>
+        <CurrentGameContext.Provider value={[currentGame, setCurrentGame]}>
+          <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
+            <MovIndexContext.Provider value={[movIndex, setMovIndex]}>
+              <BoardHistoryContext.Provider
+                value={[boardHistory, setBoardHistory]}
+              >
+                <Navbar />
+                <Board />
+              </BoardHistoryContext.Provider>
+            </MovIndexContext.Provider>
+            <MoveList />
+          </PlayedMovesContext.Provider>
+        </CurrentGameContext.Provider>
       </div>
     </div>
   );

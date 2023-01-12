@@ -121,7 +121,7 @@ h1{
 
 .game:hover{
   background-color: rgb(252, 180, 92) ;
-  cursor: pointer;
+  cursor: pointer; /*chwilowo nie dziala a dzialalo [??]*/
 }
 
 .result{
