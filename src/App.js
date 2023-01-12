@@ -9,6 +9,7 @@ Odpowiedni Display partii(nazwiska nad partią itp)
 zawijanie movelisty k
 nr ruchów na moveliscie [k???]
 bugi w rekurencji fest
+bug z borderami planszy po dodaniu tytulu
 */
 
 const DIAGONALS = {
@@ -17,10 +18,6 @@ const DIAGONALS = {
   southWest: { x: -1, y: 1 },
   southEast: { x: 1, y: 1 },
 };
-
-const shownGame = gamesDatabase[4];
-const TEST_GAME3 = transformIntoGameFormat(shownGame.game);
-console.log(TEST_GAME3);
 const DEFAULT_BOARD = [];
 
 for (let i = 0; i < 50; i++) {
@@ -115,6 +112,8 @@ function handleTurn(move, pieces) {
   }
 }
 
+const isInBoard = ({ x, y }) => x < 10 && x > -1 && y > -1 && y < 10;
+
 const addCoords = ({ x: x1, y: y1 }, { x: x2, y: y2 }) => ({
   x: x1 + x2,
   y: y1 + y2,
@@ -151,6 +150,8 @@ function getLongestCaptureChain(
       pieceCoords,
       mulCoords(direction, 2)
     );
+
+    if (!isInBoard(fieldAfterPieceToCaptureCoords)) continue;
     if (
       getPieceOnBoard(pieceToCaptureCoords, pieces) &&
       getPieceOnBoard(pieceToCaptureCoords, pieces).color !== ogPieceColor &&
@@ -183,6 +184,8 @@ function getLongestCaptureChain(
 
     chainsOfCaptures.push(currentChain);
   }
+
+  if (chainsOfCaptures.length === 0) return [];
 
   const longestChainLength = Math.max(
     ...chainsOfCaptures.map((chain) => chain.length)
@@ -261,6 +264,7 @@ function Board() {
   };
   return (
     <div className="board">
+      <Title names={currentGame.title} result={currentGame.result} />
       {Array(10)
         .fill()
         .map((_, y) => {
@@ -343,6 +347,7 @@ function Navbar() {
   let [boardHistory, setBoardHistory] = useContext(BoardHistoryContext);
   let [movIndex, setMovIndex] = useContext(MovIndexContext);
   let [playedMoves, setPlayedMoves] = useContext(PlayedMovesContext);
+  // useEffect w boardzie z currentGame w zaleznosciach resetujący caly stan
 
   const gamesDatabaseCopy = gamesDatabase.slice();
   const gamesToDisplay = gamesDatabaseCopy.filter(
@@ -387,23 +392,20 @@ function App() {
   const [boardHistory, setBoardHistory] = useState([DEFAULT_BOARD]);
   const [movIndex, setMovIndex] = useState(0);
   return (
-    <div>
-      <Title names={shownGame.title} result={shownGame.result} />
-      <div className="container">
-        <CurrentGameContext.Provider value={[currentGame, setCurrentGame]}>
-          <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
-            <MovIndexContext.Provider value={[movIndex, setMovIndex]}>
-              <BoardHistoryContext.Provider
-                value={[boardHistory, setBoardHistory]}
-              >
-                <Navbar />
-                <Board />
-              </BoardHistoryContext.Provider>
-            </MovIndexContext.Provider>
-            <MoveList />
-          </PlayedMovesContext.Provider>
-        </CurrentGameContext.Provider>
-      </div>
+    <div className="container">
+      <CurrentGameContext.Provider value={[currentGame, setCurrentGame]}>
+        <PlayedMovesContext.Provider value={[playedMoves, setPlayedMoves]}>
+          <MovIndexContext.Provider value={[movIndex, setMovIndex]}>
+            <BoardHistoryContext.Provider
+              value={[boardHistory, setBoardHistory]}
+            >
+              <Navbar />
+              <Board />
+            </BoardHistoryContext.Provider>
+          </MovIndexContext.Provider>
+          <MoveList />
+        </PlayedMovesContext.Provider>
+      </CurrentGameContext.Provider>
     </div>
   );
 }

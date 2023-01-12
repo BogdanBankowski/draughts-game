@@ -1,7 +1,5 @@
 .board{
   background-color: burlywood;
-  width:500px;
-  height:500px;
   border: solid 2px black;
   margin-top: 70px;
   margin-left: 70px;
@@ -127,6 +125,8 @@ h1{
 .result{
   font-weight: bolder;
 }
+
+
 
 .App {
   text-align: center;
