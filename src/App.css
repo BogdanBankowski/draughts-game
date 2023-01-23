@@ -1,31 +1,46 @@
 .board{
   background-color: burlywood;
   border: solid 2px black;
-  margin-top: 70px;
-  margin-left: 70px;
+  margin-top: 15vh;
+  height: 70vh;
+  width: 70vh;
+  position: relative;
 }
 
+.page{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
+.title{
+  height: 10vh;
+  width: 70vh;
+  text-align: center;
+  /*background-color: burlywood;*/
+  position: absolute;
+  top: 0;
+  max-width: 600px; /* ustaw maksymalną szerokość */
+  text-align: center; /* wyśrodkuj tekst */
+}
 
 .field-white{
-  width: 50px;
-  height: 50px;
+  width: 7vh;
+  height: 7vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
 }
 .field-black{
-  width: 50px;
-  height: 50px;
+  width: 7vh;
+  height: 7vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: rgb(116, 81, 70);
   z-index:50;
 }
-/*rgb(76, 104, 62)
-rgb(116, 81, 70)*/
 
 .row{
   display:flex;
@@ -49,22 +64,18 @@ rgb(116, 81, 70)*/
   border-radius: 50%;
 }
 
-
-
-.button-image{
-  height: 50px;
-  width: 100px;
-}
-
 .navbar{
   display: flex;
   justify-content: space-around;
-  margin-top: 30px;
+  margin-top: 2vh;
 }
 
-.container{
+.main-content{
   display: flex;
   justify-content: space-around;
+  margin-top: -5vh;
+  width: 100vw;
+  
 }
 ul{
   list-style: none;
@@ -79,12 +90,13 @@ li{
   margin-right: 18px;
 }
 .moves-list{
-margin-top: 70px;
 display: flex;
 background-color: bisque;
 border: 3px solid black;
 padding-top: 0;
 margin-top: 0;
+max-height: 100%;
+overflow: auto;
 
 }
 .navButton{
@@ -126,13 +138,9 @@ h1{
   font-weight: bolder;
 }
 
-
-
 .App {
   text-align: center;
 }
-
-
 
 .App-logo {
   height: 40vmin;
