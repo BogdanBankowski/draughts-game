@@ -141,6 +141,13 @@ export function getLongestCaptureChain(
       )
     );
 
+    // jeśli łańcuch się kończy na tym ruchu i nie jest to ruch wybrany przez gracza, pomiń
+    if (
+      currentChain.length === 1 &&
+      coordsToNum(pieceCoordsAfterCapture) !== fieldNumberTo
+    ) {
+      continue;
+    }
     chainsOfCaptures.push(currentChain);
   }
 

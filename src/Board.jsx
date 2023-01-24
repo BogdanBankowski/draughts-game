@@ -108,7 +108,7 @@ export function Board() {
             );
           })}
         <div className="navbar">
-          <button className="navButton" onClick={() => previousMove()}>
+        <button className="navButton" disabled={movIndex <= 0} onClick={() => previousMove()}>
             ⇦
           </button>
           <button
@@ -117,7 +117,7 @@ export function Board() {
           >
             {stopButtonClicked ? "▶" : "II"}
           </button>
-          <button className="navButton" onClick={() => nextMove()}>
+          <button className="navButton" disabled={movIndex >= moves.length} onClick={() => nextMove()}>
             ⇨
           </button>
         </div>

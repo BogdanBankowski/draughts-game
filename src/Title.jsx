@@ -1,8 +1,8 @@
 export function Title(props) {
     return (
-      <div className="title">
+      <h1 className="title">
         <span className="names">{props.names}</span>{" "}
         <span className="result">{props.result}</span>
-      </div>
+      </h1>
     );
   }
