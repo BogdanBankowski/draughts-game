@@ -18,7 +18,7 @@ export function MoveList() {
     ));
     return (
       <div>
-        <h1>Moves List</h1>
+        <h1 className='moves-list-title'>Moves List</h1>
         <div className="moves-list">
           <ul className="white-list">{whiteList}</ul>
           <ul>{blackList}</ul>
